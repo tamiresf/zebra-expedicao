@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Expedição Zebra</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #f4f6f8; margin: 0; padding: 16px; display: flex; justify-content: center; }
+    .card { background: #fff; width: 100%; max-width: 420px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; color: #1e293b; font-size: 1.3rem; text-align: center; }
+    label { display: block; margin-top: 14px; font-weight: 600; color: #475569; font-size: 0.9rem; }
+    input { width: 100%; padding: 12px; margin-top: 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
+    input:focus { border-color: #2563eb; }
+    button { width: 100%; background-color: #2563eb; color: #fff; border: none; padding: 14px; margin-top: 20px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    button:disabled { background-color: #94a3b8; }
+    #msg { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600; }
+    .sucesso { background-color: #dcfce7; color: #166534; }
+    .erro { background-color: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🏷️ Emissão Zebra</h2>
+  
+  <form id="etiquetaForm">
+    <label for="transp">Transportadora</label>
+    <input type="text" id="transp" placeholder="Ex: Pajucara, Jamef" required autocomplete="off">
+
+    <label for="cliente">Cliente</label>
+    <input type="text" id="cliente" placeholder="Ex: Casa do Ferrador" required autocomplete="off">
+
+    <label for="pedido">Número do Pedido</label>
+    <input type="text" id="pedido" placeholder="Ex: 3050" required autocomplete="off">
+
+    <button type="submit" id="btnEnviar">🖨️ IMPRIMIR ETIQUETA</button>
+  </form>
+
+  <div id="msg"></div>
+</div>
+
+<script>
+  // Credenciais do Supabase
+  const SUPABASE_URL = "https://tlknbjaaahfpbwjovyut.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_o1uxZ7iShu9Pk9_NLXlTVg_AP7wjf1T";
+
+  const form = document.getElementById("etiquetaForm");
+  const btn = document.getElementById("btnEnviar");
+  const msg = document.getElementById("msg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+    msg.style.display = "none";
+
+    const payload = {
+      transportadora: document.getElementById("transp").value.trim(),
+      cliente: document.getElementById("cliente").value.trim(),
+      numero_pedido: document.getElementById("pedido").value.trim(),
+      status: "PENDENTE"
+    };
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/fila_impressao`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        msg.className = "sucesso";
+        msg.innerText = `✅ Pedido ${payload.numero_pedido} enviado com sucesso!`;
+        msg.style.display = "block";
+        form.reset();
+        document.getElementById("transp").focus();
+      } else {
+        throw new Error("Falha ao gravar no Supabase");
+      }
+    } catch (err) {
+      msg.className = "erro";
+      msg.innerText = "❌ Erro ao enviar. Verifique o sinal Wi-Fi.";
+      msg.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "🖨️ IMPRIMIR ETIQUETA";
+    }
+  });
+</script>
+
+</body>
+</html>
