@@ -1,30 +1,48 @@
 import streamlit as st
 from supabase import create_client, Client
 
+# Configuração de página com carregamento estático e rápido
+st.set_page_config(
+    page_title="Emissor Zebra",
+    page_icon="🏷️",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+# Conexão direta com Supabase
 SUPABASE_URL = "https://tlknbjaaahfpbwjovyut.supabase.co"
 SUPABASE_KEY = "sb_publishable_o1uxZ7iShu9Pk9_NLXlTVg_AP7wjf1T"
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+@st.cache_resource
+def get_supabase():
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-st.title("🏷️ Expedição - Emissão de Etiquetas")
+supabase: Client = get_supabase()
 
-# Formulário com campos comuns de formulário
-with st.form("form_zebra", clear_on_submit=True):
-    transportadora = st.text_area("Transportadora", height=68, placeholder="Ex: Pajucara")
-    cliente = st.text_area("Cliente", height=68, placeholder="Ex: Casa do Ferrador")
-    numero_pedido = st.text_area("Número do Pedido", height=68, placeholder="Ex: 3050")
+st.subheader("🏷️ Expedição - Emissão de Etiquetas")
+
+with st.form("form_coletor", clear_on_submit=True):
+    transportadora = st.text_input("Transportadora")
+    cliente = st.text_input("Cliente")
+    numero_pedido = st.text_input("Número do Pedido")
     
-    enviar = st.form_submit_button("🖨️ IMPRIMIR ETIQUETA", use_container_width=True)
+    enviar = st.form_submit_button("IMPRIMIR ETIQUETA", use_container_width=True)
 
 if enviar:
-    if not transportadora.strip() or not cliente.strip() or not numero_pedido.strip():
-        st.warning("Preencha todos os campos.")
+    t = transportadora.strip()
+    c = cliente.strip()
+    p = numero_pedido.strip()
+    
+    if not t or not c or not p:
+        st.warning("Preencha todos os campos antes de enviar.")
     else:
-        dados = {
-            "transportadora": transportadora.strip(),
-            "cliente": cliente.strip(),
-            "numero_pedido": numero_pedido.strip(),
-            "status": "PENDENTE"
-        }
-        supabase.table("fila_impressao").insert(dados).execute()
-        st.success(f"Pedido {numero_pedido.strip()} enviado com sucesso!")
+        try:
+            supabase.table("fila_impressao").insert({
+                "transportadora": t,
+                "cliente": c,
+                "numero_pedido": p,
+                "status": "PENDENTE"
+            }).execute()
+            st.success(f"Pedido {p} enviado para a impressora!")
+        except Exception as e:
+            st.error(f"Erro de envio: {e}")
