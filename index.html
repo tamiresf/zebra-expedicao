@@ -12,7 +12,10 @@
     label { display: block; margin-top: 14px; font-weight: 600; color: #475569; font-size: 0.9rem; }
     input, select { width: 100%; padding: 12px; margin-top: 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; background-color: #fff; }
     input:focus, select:focus { border-color: #2563eb; }
-    #campoManual { display: none; }
+    
+    /* Campo manual oculto por padrão */
+    #containerManual { display: none; }
+    
     button { width: 100%; background-color: #2563eb; color: #fff; border: none; padding: 14px; margin-top: 22px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
     button:disabled { background-color: #94a3b8; }
     #msg { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600; }
@@ -35,11 +38,12 @@
       <option value="BRASPRESS">BRASPRESS</option>
       <option value="CORREIOS">CORREIOS</option>
       <option value="DISCO">DISCO</option>
-      <option value="OUTRA">OUTRA (Digitar manualmente)</option>
+      <option value="OUTRA">OUTRA</option>
     </select>
 
-    <div id="campoManual">
-      <label for="transpManual">Nome da Transportadora</label>
+    <!-- Este bloco só aparece quando "OUTRA" estiver selecionado -->
+    <div id="containerManual">
+      <label for="transpManual">Qual transportadora?</label>
       <input type="text" id="transpManual" placeholder="Digite o nome da transportadora" autocomplete="off">
     </div>
 
@@ -61,19 +65,19 @@
 
   const form = document.getElementById("etiquetaForm");
   const transpSelect = document.getElementById("transpSelect");
-  const campoManual = document.getElementById("campoManual");
+  const containerManual = document.getElementById("containerManual");
   const transpManual = document.getElementById("transpManual");
   const btn = document.getElementById("btnEnviar");
   const msg = document.getElementById("msg");
 
-  // Mostra ou esconde o campo manual conforme a seleção
+  // Monitora a troca da opção no menu suspenso
   transpSelect.addEventListener("change", () => {
     if (transpSelect.value === "OUTRA") {
-      campoManual.style.display = "block";
+      containerManual.style.display = "block";
       transpManual.required = true;
       transpManual.focus();
     } else {
-      campoManual.style.display = "none";
+      containerManual.style.display = "none";
       transpManual.required = false;
       transpManual.value = "";
     }
@@ -86,6 +90,7 @@
     btn.innerText = "Enviando...";
     msg.style.display = "none";
 
+    // Resgata o nome correto da transportadora
     let transportadoraFinal = transpSelect.value;
     if (transpSelect.value === "OUTRA") {
       transportadoraFinal = transpManual.value.trim().toUpperCase();
@@ -115,7 +120,7 @@
         msg.innerText = `✅ Pedido ${payload.numero_pedido} enviado com sucesso!`;
         msg.style.display = "block";
         form.reset();
-        campoManual.style.display = "none";
+        containerManual.style.display = "none";
         transpSelect.focus();
       } else {
         throw new Error("Falha ao gravar no Supabase");
