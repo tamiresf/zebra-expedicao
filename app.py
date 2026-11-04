@@ -8,6 +8,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Conexão direta com Supabase
 SUPABASE_URL = "https://tlknbjaaahfpbwjovyut.supabase.co"
 SUPABASE_KEY = "sb_publishable_o1uxZ7iShu9Pk9_NLXlTVg_AP7wjf1T"
 
