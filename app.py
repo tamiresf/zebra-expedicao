@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import create_client, Client
 
+# Configuração de página com carregamento estático e rápido
 st.set_page_config(
     page_title="Emissor Zebra",
     page_icon="🏷️",
@@ -38,7 +39,7 @@ transp_selecionada = st.selectbox("Transportadora", LISTA_TRANSPORTADORAS)
 # Exibe o campo manual APENAS se escolher "OUTRA"
 transp_manual = ""
 if transp_selecionada == "OUTRA":
-    transp_manual = st.text_input("Digite o nome da transportadora:", placeholder="Nome da transportadora")
+    transp_manual = st.text_input("Qual transportadora?", placeholder="Digite o nome da transportadora")
 
 with st.form("form_coletor", clear_on_submit=True):
     cliente = st.text_input("Cliente", placeholder="Ex: Casa do Ferrador")
@@ -56,16 +57,21 @@ if enviar:
     c = cliente.strip().upper()
     p = numero_pedido.strip().upper()
     
-    if not t or not c or not p:
-        st.warning("Preencha todos os campos obrigatórios antes de enviar.")
+    if not t:
+        st.warning("Informe o nome da transportadora.")
+    elif not c:
+        st.warning("Informe o nome do cliente.")
+    elif not p:
+        st.warning("Informe o número do pedido.")
     else:
         try:
-            supabase.table("fila_impressao").insert({
+            dados = {
                 "transportadora": t,
                 "cliente": c,
                 "numero_pedido": p,
                 "status": "PENDENTE"
-            }).execute()
+            }
+            supabase.table("fila_impressao").insert(dados).execute()
             st.success(f"Pedido {p} enviado para a impressora!")
         except Exception as e:
             st.error(f"Erro de envio: {e}")
