@@ -10,9 +10,10 @@
     .card { background: #fff; width: 100%; max-width: 420px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     h2 { margin-top: 0; color: #1e293b; font-size: 1.3rem; text-align: center; }
     label { display: block; margin-top: 14px; font-weight: 600; color: #475569; font-size: 0.9rem; }
-    input { width: 100%; padding: 12px; margin-top: 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
-    input:focus { border-color: #2563eb; }
-    button { width: 100%; background-color: #2563eb; color: #fff; border: none; padding: 14px; margin-top: 20px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    input, select { width: 100%; padding: 12px; margin-top: 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; background-color: #fff; }
+    input:focus, select:focus { border-color: #2563eb; }
+    #campoManual { display: none; }
+    button { width: 100%; background-color: #2563eb; color: #fff; border: none; padding: 14px; margin-top: 22px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
     button:disabled { background-color: #94a3b8; }
     #msg { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600; }
     .sucesso { background-color: #dcfce7; color: #166534; }
@@ -25,8 +26,22 @@
   <h2>🏷️ Emissão Zebra</h2>
   
   <form id="etiquetaForm">
-    <label for="transp">Transportadora</label>
-    <input type="text" id="transp" placeholder="Ex: Pajucara, Jamef" required autocomplete="off">
+    <label for="transpSelect">Transportadora</label>
+    <select id="transpSelect" required>
+      <option value="PAJUÇARA">PAJUÇARA</option>
+      <option value="EDSON">EDSON</option>
+      <option value="JAMEF">JAMEF</option>
+      <option value="PATRUS">PATRUS</option>
+      <option value="BRASPRESS">BRASPRESS</option>
+      <option value="CORREIOS">CORREIOS</option>
+      <option value="DISCO">DISCO</option>
+      <option value="OUTRA">OUTRA (Digitar manualmente)</option>
+    </select>
+
+    <div id="campoManual">
+      <label for="transpManual">Nome da Transportadora</label>
+      <input type="text" id="transpManual" placeholder="Digite o nome da transportadora" autocomplete="off">
+    </div>
 
     <label for="cliente">Cliente</label>
     <input type="text" id="cliente" placeholder="Ex: Casa do Ferrador" required autocomplete="off">
@@ -41,13 +56,28 @@
 </div>
 
 <script>
-  // Credenciais do Supabase
   const SUPABASE_URL = "https://tlknbjaaahfpbwjovyut.supabase.co";
   const SUPABASE_KEY = "sb_publishable_o1uxZ7iShu9Pk9_NLXlTVg_AP7wjf1T";
 
   const form = document.getElementById("etiquetaForm");
+  const transpSelect = document.getElementById("transpSelect");
+  const campoManual = document.getElementById("campoManual");
+  const transpManual = document.getElementById("transpManual");
   const btn = document.getElementById("btnEnviar");
   const msg = document.getElementById("msg");
+
+  // Mostra ou esconde o campo manual conforme a seleção
+  transpSelect.addEventListener("change", () => {
+    if (transpSelect.value === "OUTRA") {
+      campoManual.style.display = "block";
+      transpManual.required = true;
+      transpManual.focus();
+    } else {
+      campoManual.style.display = "none";
+      transpManual.required = false;
+      transpManual.value = "";
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -56,10 +86,15 @@
     btn.innerText = "Enviando...";
     msg.style.display = "none";
 
+    let transportadoraFinal = transpSelect.value;
+    if (transpSelect.value === "OUTRA") {
+      transportadoraFinal = transpManual.value.trim().toUpperCase();
+    }
+
     const payload = {
-      transportadora: document.getElementById("transp").value.trim(),
-      cliente: document.getElementById("cliente").value.trim(),
-      numero_pedido: document.getElementById("pedido").value.trim(),
+      transportadora: transportadoraFinal,
+      cliente: document.getElementById("cliente").value.trim().toUpperCase(),
+      numero_pedido: document.getElementById("pedido").value.trim().toUpperCase(),
       status: "PENDENTE"
     };
 
@@ -80,7 +115,8 @@
         msg.innerText = `✅ Pedido ${payload.numero_pedido} enviado com sucesso!`;
         msg.style.display = "block";
         form.reset();
-        document.getElementById("transp").focus();
+        campoManual.style.display = "none";
+        transpSelect.focus();
       } else {
         throw new Error("Falha ao gravar no Supabase");
       }
