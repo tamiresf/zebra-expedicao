@@ -1,7 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
 
-# Configuração de página com carregamento estático e rápido
 st.set_page_config(
     page_title="Emissor Zebra",
     page_icon="🏷️",
@@ -9,7 +8,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Conexão direta com Supabase
 SUPABASE_URL = "https://tlknbjaaahfpbwjovyut.supabase.co"
 SUPABASE_KEY = "sb_publishable_o1uxZ7iShu9Pk9_NLXlTVg_AP7wjf1T"
 
@@ -21,7 +19,6 @@ supabase: Client = get_supabase()
 
 st.subheader("🏷️ Expedição - Emissão de Etiquetas")
 
-# Lista de transportadoras
 LISTA_TRANSPORTADORAS = [
     "PAJUÇARA",
     "EDSON",
@@ -33,10 +30,8 @@ LISTA_TRANSPORTADORAS = [
     "OUTRA"
 ]
 
-# Seleção da transportadora (fora do form para reagir imediatamente ao clique)
 transp_selecionada = st.selectbox("Transportadora", LISTA_TRANSPORTADORAS)
 
-# Exibe o campo manual APENAS se escolher "OUTRA"
 transp_manual = ""
 if transp_selecionada == "OUTRA":
     transp_manual = st.text_input("Qual transportadora?", placeholder="Digite o nome da transportadora")
@@ -44,11 +39,11 @@ if transp_selecionada == "OUTRA":
 with st.form("form_coletor", clear_on_submit=True):
     cliente = st.text_input("Cliente", placeholder="Ex: Casa do Ferrador")
     numero_pedido = st.text_input("Número do Pedido", placeholder="Ex: 3050")
+    quantidade = st.number_input("Cópias (Opcional)", min_value=1, max_value=99, value=1, step=1)
     
     enviar = st.form_submit_button("🖨️ IMPRIMIR ETIQUETA", use_container_width=True)
 
 if enviar:
-    # Define o nome final da transportadora
     if transp_selecionada == "OUTRA":
         t = transp_manual.strip().upper()
     else:
@@ -56,6 +51,7 @@ if enviar:
 
     c = cliente.strip().upper()
     p = numero_pedido.strip().upper()
+    q = int(quantidade) if quantidade else 1
     
     if not t:
         st.warning("Informe o nome da transportadora.")
@@ -69,9 +65,10 @@ if enviar:
                 "transportadora": t,
                 "cliente": c,
                 "numero_pedido": p,
+                "quantidade": q,
                 "status": "PENDENTE"
             }
             supabase.table("fila_impressao").insert(dados).execute()
-            st.success(f"Pedido {p} enviado para a impressora!")
+            st.success(f"Pedido {p} ({q} cópias) enviado para a impressora!")
         except Exception as e:
             st.error(f"Erro de envio: {e}")
