@@ -21,20 +21,39 @@ supabase: Client = get_supabase()
 
 st.subheader("🏷️ Expedição - Emissão de Etiquetas")
 
+# Lista de transportadoras padrão
+LISTA_TRANSPORTADORAS = [
+    "PAJUÇARA",
+    "EDSON",
+    "JAMEF",
+    "PATRUS",
+    "BRASPRESS",
+    "CORREIOS",
+    "DISCO",
+    "OUTRA (Digitar manualmente)"
+]
+
 with st.form("form_coletor", clear_on_submit=True):
-    transportadora = st.text_input("Transportadora")
-    cliente = st.text_input("Cliente")
-    numero_pedido = st.text_input("Número do Pedido")
+    transp_selecionada = st.selectbox("Transportadora", LISTA_TRANSPORTADORAS)
+    transp_manual = st.text_input("Se escolheu 'OUTRA', digite aqui o nome:", placeholder="Nome da transportadora")
     
-    enviar = st.form_submit_button("IMPRIMIR ETIQUETA", use_container_width=True)
+    cliente = st.text_input("Cliente", placeholder="Ex: Casa do Ferrador")
+    numero_pedido = st.text_input("Número do Pedido", placeholder="Ex: 3050")
+    
+    enviar = st.form_submit_button("🖨️ IMPRIMIR ETIQUETA", use_container_width=True)
 
 if enviar:
-    t = transportadora.strip()
-    c = cliente.strip()
-    p = numero_pedido.strip()
+    # Define a transportadora final
+    if transp_selecionada == "OUTRA (Digitar manualmente)":
+        t = transp_manual.strip().upper()
+    else:
+        t = transp_selecionada.strip().upper()
+
+    c = cliente.strip().upper()
+    p = numero_pedido.strip().upper()
     
     if not t or not c or not p:
-        st.warning("Preencha todos os campos antes de enviar.")
+        st.warning("Preencha todos os campos obrigatórios antes de enviar.")
     else:
         try:
             supabase.table("fila_impressao").insert({
