@@ -12,10 +12,7 @@
     label { display: block; margin-top: 14px; font-weight: 600; color: #475569; font-size: 0.9rem; }
     input, select { width: 100%; padding: 12px; margin-top: 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; background-color: #fff; }
     input:focus, select:focus { border-color: #2563eb; }
-    
-    /* Campo manual oculto por padrão */
     #containerManual { display: none; }
-    
     button { width: 100%; background-color: #2563eb; color: #fff; border: none; padding: 14px; margin-top: 22px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
     button:disabled { background-color: #94a3b8; }
     #msg { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600; }
@@ -41,7 +38,6 @@
       <option value="OUTRA">OUTRA</option>
     </select>
 
-    <!-- Este bloco só aparece quando "OUTRA" estiver selecionado -->
     <div id="containerManual">
       <label for="transpManual">Qual transportadora?</label>
       <input type="text" id="transpManual" placeholder="Digite o nome da transportadora" autocomplete="off">
@@ -52,6 +48,9 @@
 
     <label for="pedido">Número do Pedido</label>
     <input type="text" id="pedido" placeholder="Ex: 3050" required autocomplete="off">
+
+    <label for="quantidade">Cópias (Opcional - Padrão: 1)</label>
+    <input type="number" id="quantidade" value="1" min="1" max="99" autocomplete="off">
 
     <button type="submit" id="btnEnviar">🖨️ IMPRIMIR ETIQUETA</button>
   </form>
@@ -70,7 +69,6 @@
   const btn = document.getElementById("btnEnviar");
   const msg = document.getElementById("msg");
 
-  // Monitora a troca da opção no menu suspenso
   transpSelect.addEventListener("change", () => {
     if (transpSelect.value === "OUTRA") {
       containerManual.style.display = "block";
@@ -90,16 +88,19 @@
     btn.innerText = "Enviando...";
     msg.style.display = "none";
 
-    // Resgata o nome correto da transportadora
     let transportadoraFinal = transpSelect.value;
     if (transpSelect.value === "OUTRA") {
       transportadoraFinal = transpManual.value.trim().toUpperCase();
     }
 
+    const qtdInput = parseInt(document.getElementById("quantidade").value, 10);
+    const qtdFinal = isNaN(qtdInput) || qtdInput < 1 ? 1 : qtdInput;
+
     const payload = {
       transportadora: transportadoraFinal,
       cliente: document.getElementById("cliente").value.trim().toUpperCase(),
       numero_pedido: document.getElementById("pedido").value.trim().toUpperCase(),
+      quantidade: qtdFinal,
       status: "PENDENTE"
     };
 
@@ -117,9 +118,10 @@
 
       if (response.ok) {
         msg.className = "sucesso";
-        msg.innerText = `✅ Pedido ${payload.numero_pedido} enviado com sucesso!`;
+        msg.innerText = `✅ Pedido ${payload.numero_pedido} (${qtdFinal}x) enviado com sucesso!`;
         msg.style.display = "block";
         form.reset();
+        document.getElementById("quantidade").value = "1";
         containerManual.style.display = "none";
         transpSelect.focus();
       } else {
